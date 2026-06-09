@@ -95,6 +95,7 @@ bool I2C_Read(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght);
 void writeDisplay(float number);
 void setLeds(uint8_t ledTop, uint8_t ledBottom);
 void writeUnit(uint8_t unit);
+void setOutputVoltage(uint16_t milivolt);
 
 int main(void) {
 	SYSTEM_Initialize();
@@ -130,20 +131,8 @@ int main(void) {
 
 	float value = 15.0;
 	
-	uint16_t DAC_OUT = 0;
-	
-
 	while (1) {
-		if (IO_RC4_GetValue()==0) {
-			DAC_OUT += 100;
-		}
-		while (IO_RC4_GetValue() == 0) {
-			NOP();
-		}
-		if (DAC_OUT>4095) {
-			DAC_OUT = 0;
-		}
-		MCP47_SetOutput(MCP47_CHANNEL_1,533);
+		setOutputVoltage(15000);
 		MCP47_SetOutput(MCP47_CHANNEL_0,49);
 		I2C_Read(0b1001001,voltage,2);
 		I2C_Read(0b1001000,current,2);
@@ -158,6 +147,7 @@ int main(void) {
 		//value = value /1000;
 		
 		writeDisplay(value);
+		__delay_us(50);
 		writeUnit(UNIT_Amps);
 		__delay_ms(500);
 	}
@@ -239,6 +229,11 @@ void writeUnit(uint8_t unit){
 	//Update display
 	uint8_t update[] = {0x0C, 0x00};
 	I2C_Write(clientAddr, update, 2);
+}
+
+void setOutputVoltage(uint16_t milivolt){
+	uint16_t DAC_value = ((uint32_t)milivolt * 10559)>>16;
+	MCP47_SetOutput(MCP47_CHANNEL_1,DAC_value);
 }
 
 uint8_t encoder_read_pins(void) {

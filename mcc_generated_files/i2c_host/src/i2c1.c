@@ -72,8 +72,8 @@ void I2C1_Initialize(void)
     I2C1CON0 = 0x4;
     /* TXU No underflow; CSD Clock Stretching enabled; RXO No overflow; P Cleared by hardware after sending Stop; ACKDT Acknowledge; ACKCNT Not Acknowledge;  */
     I2C1CON1 = 0x80;
-    /* ABD enabled; GCEN disabled; ACNT disabled; SDAHT 30 ns hold time; BFRET 8 I2C Clock pulses; FME enabled;  */
-    I2C1CON2 = 0x28;
+    /* ABD enabled; GCEN disabled; ACNT disabled; SDAHT 30 ns hold time; BFRET 8 I2C Clock pulses; FME disabled;  */
+    I2C1CON2 = 0x8;
     /* CLK Fosc;  */
     I2C1CLK = 0x1;
     /* WRIF Data byte not detected; CNTIF Byte count is not zero; RSCIF Restart condition not detected; PCIF Stop condition not detected; ACKTIF Acknowledge sequence not detected; ADRIF Address not detected; SCIF Start condition not detected;  */
@@ -85,8 +85,8 @@ void I2C1_Initialize(void)
     /* Count register */
     I2C1CNTL = 0x0;
     I2C1CNTH = 0x0;
-    /* BAUD 39;  */
-    I2C1BAUD = 0x27;
+    /* BAUD 127;  */
+    I2C1BAUD = 0x7F;
     /* BTOC TMR2 post scaled output;  */
     I2C1BTOC = 0x0;
     /* Clock PadReg Configuration */

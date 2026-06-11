@@ -69,11 +69,11 @@ const int8_t encoderLut[16] = {
 	0, 1, -1, 0
 };
 
-#define VOLTAGE_STEP_MV  100
+#define VOLTAGE_STEP_MV  50
 #define VOLTAGE_MIN_MV   0
 #define VOLTAGE_MAX_MV   24000
 
-#define CURRENT_STEP_MA  10
+#define CURRENT_STEP_MA  5
 #define CURRENT_MIN_MA   0
 #define CURRENT_MAX_MA   2000
 

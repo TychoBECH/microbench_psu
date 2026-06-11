@@ -11,7 +11,7 @@
  */
 
 /*
-© [2026] Microchip Technology Inc. and its subsidiaries.
+ï¿½ [2026] Microchip Technology Inc. and its subsidiaries.
 
 	Subject to your compliance with these terms, you may use Microchip 
 	software and any derivatives exclusively with Microchip products. 
@@ -31,6 +31,7 @@
 	THIS SOFTWARE.
  */
 #include "mcc_generated_files/system/system.h"
+#include "mcc_generated_files/timer/tmr4.h"
 #include "mcp47cxdx.h"
 
 /*
@@ -68,23 +69,21 @@ const int8_t encoderLut[16] = {
 	0, 1, -1, 0
 };
 
-#define ENC_FAST_MS      100
-#define ENC_MEDIUM_MS    500
+#define VOLTAGE_STEP_MV  100
+#define VOLTAGE_MIN_MV   0
+#define VOLTAGE_MAX_MV   24000
 
-#define STEP_SLOW  1
-#define STEP_MEDIUM  10
-#define STEP_FAST  100
+#define CURRENT_STEP_MA  10
+#define CURRENT_MIN_MA   0
+#define CURRENT_MAX_MA   2000
 
 #define UNIT_Amps 0
 #define UNIT_Volts 1
 
 static volatile int16_t encoder_delta = 0;
 static uint8_t prev_state = 0;
-static uint16_t ms_counter = 0;
-static uint16_t last_step_time = 0;
 
 uint8_t encoder_read_pins(void);
-int16_t encoder_get_step_size(uint16_t dt_ms);
 int16_t encoder_get_delta(void);
 void encoder_task(void);
 
@@ -96,60 +95,43 @@ void writeDisplay(float number);
 void setLeds(uint8_t ledTop, uint8_t ledBottom);
 void writeUnit(uint8_t unit);
 void setOutputVoltage(uint16_t milivolt);
+void setCurrentLimit(uint16_t miliamp);
 
 int main(void) {
 	SYSTEM_Initialize();
-	
+
 	IO_RA4_SetHigh();
 
-	// If using interrupts in PIC18 High/Low Priority Mode you need to enable the Global High and Low Interrupts 
-	// If using interrupts in PIC Mid-Range Compatibility Mode you need to enable the Global Interrupts 
-	// Use the following macros to: 
-
-	// Enable the Global Interrupts 
-	//INTERRUPT_GlobalInterruptEnable();
-
-	// Disable the Global Interrupts 
-	//INTERRUPT_GlobalInterruptDisable(); 
+	TMR4_OverflowCallbackRegister(encoder_task);
+	INTERRUPT_GlobalInterruptEnable();
 
 	uint8_t data2[] = {0x0D, 0b00001000};
-
 	I2C1_Host.Write(clientAddr, data2, 2);
 	while (I2C1_Host.IsBusy()) {
 		I2C1_Host.Tasks();
 		NOP();
 	}
-	
-	uint8_t temperature [2];
-	I2C_Read(0b1001010,temperature,2);
-	
-	uint8_t voltage [2];
-	I2C_Read(0b1001001,voltage,2);
-	
-	uint8_t current [2];
-	I2C_Read(0b1001000,current,2);
 
-	float value = 15.0;
-	
+	uint16_t voltage_set_point = 0;
+	uint16_t current_set_point = 0;
+
+	setOutputVoltage(voltage_set_point);
+	setCurrentLimit(current_set_point);
+
 	while (1) {
-		setOutputVoltage(15000);
-		MCP47_SetOutput(MCP47_CHANNEL_0,49);
-		I2C_Read(0b1001001,voltage,2);
-		I2C_Read(0b1001000,current,2);
-		value = 0.0;
-		value += (float)(voltage[0]*265*0.016132872);
-		value += (float)(voltage[1]*0.016132872);
-		
-		value = current[0]*256;
-		value += current[1];
-		
-		value = value / 669;
-		//value = value /1000;
-		
-		writeDisplay(value);
+		int16_t delta = encoder_get_delta();
+		if (delta != 0) {
+			int32_t new_v = (int32_t)voltage_set_point + (int32_t)delta * VOLTAGE_STEP_MV;
+			if (new_v < VOLTAGE_MIN_MV) new_v = VOLTAGE_MIN_MV;
+			if (new_v > VOLTAGE_MAX_MV) new_v = VOLTAGE_MAX_MV;
+			voltage_set_point = (uint16_t)new_v;
+			setOutputVoltage(voltage_set_point);
+		}
+
+		writeDisplay(voltage_set_point / 1000.0f);
 		__delay_us(50);
-		writeUnit(UNIT_Amps);
-		__delay_ms(500);
+		writeUnit(UNIT_Volts);
+		__delay_ms(50);
 	}
 }
 
@@ -160,7 +142,7 @@ void I2C_Write(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght) {
 	}
 }
 
-bool I2C_Read(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght){
+bool I2C_Read(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght) {
 	I2C1_Host.Read(clientAddress, data, dataLenght);
 	while (I2C1_Host.IsBusy()) {
 		I2C1_Host.Tasks();
@@ -215,9 +197,9 @@ void setLeds(uint8_t ledTop, uint8_t ledBottom) {
 	I2C_Write(clientAddr, update, 2);
 }
 
-void writeUnit(uint8_t unit){
+void writeUnit(uint8_t unit) {
 	uint8_t transmitionData[] = {0x04, 0x00};
-	
+
 	if (unit == UNIT_Volts) {
 		transmitionData[1] = 0b11110010;
 	}
@@ -225,15 +207,26 @@ void writeUnit(uint8_t unit){
 		transmitionData[1] = 0b10110111;
 	}
 	I2C_Write(clientAddr, transmitionData, 8);
-	
+
 	//Update display
 	uint8_t update[] = {0x0C, 0x00};
 	I2C_Write(clientAddr, update, 2);
 }
 
-void setOutputVoltage(uint16_t milivolt){
-	uint16_t DAC_value = ((uint32_t)milivolt * 10559)>>16;
-	MCP47_SetOutput(MCP47_CHANNEL_1,DAC_value);
+void setOutputVoltage(uint16_t milivolt) {
+	uint16_t DAC_value = ((uint32_t) milivolt * 10600) >> 16;
+	if (DAC_value > 4095) {
+		DAC_value = 4095;
+	}
+	MCP47_SetOutput(MCP47_CHANNEL_1, DAC_value);
+}
+
+void setCurrentLimit(uint16_t miliamp) {
+	uint16_t DAC_value = ((uint32_t) miliamp * 16500) >> 16;
+	if (DAC_value > 4095) {
+		DAC_value = 4095;
+	}
+	MCP47_SetOutput(MCP47_CHANNEL_0, DAC_value);
 }
 
 uint8_t encoder_read_pins(void) {
@@ -242,35 +235,15 @@ uint8_t encoder_read_pins(void) {
 	return (a << 1) | b;
 }
 
-int16_t encoder_get_step_size(uint16_t dt_ms) {
-	if (dt_ms < ENC_FAST_MS) {
-		return STEP_FAST;
-	} else if (dt_ms < ENC_MEDIUM_MS) {
-		return STEP_MEDIUM;
-	} else {
-		return STEP_SLOW;
-	}
-}
-
 void encoder_task(void) {
-	ms_counter++;
 	uint8_t curr_state = encoder_read_pins();
 	uint8_t index = (prev_state << 2) | curr_state;
-
-	int8_t movement = encoderLut[index];
-
-	if (movement != 0) {
-		uint16_t dt = ms_counter - last_step_time;
-		last_step_time = ms_counter;
-		int16_t step = encoder_get_step_size(dt);
-		encoder_delta += movement * step;
-	}
+	encoder_delta += encoderLut[index];
 	prev_state = curr_state;
 }
 
 int16_t encoder_get_delta(void) {
-	int16_t delta;
-	delta = encoder_delta;
+	int16_t delta = encoder_delta;
 	encoder_delta = 0;
 	return delta;
 }

@@ -33,6 +33,7 @@
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/timer/tmr4.h"
 #include "mcp47cxdx.h"
+#include <stdbool.h>
 
 /*
 	Main application
@@ -77,8 +78,26 @@ const int8_t encoderLut[16] = {
 #define CURRENT_MIN_MA   0
 #define CURRENT_MAX_MA   2000
 
+// ADC I2C addresses
+#define ADC_ADDR_VOLTAGE  0b1001001
+#define ADC_ADDR_CURRENT  0b1001000
+#define ADC_ADDR_TEMP     0b1001010
+
+// Scaling: adjust these to match your hardware (voltage divider / sense amp gain)
+// mV = raw * VOLTAGE_ADC_MV_PER_LSB,  mA = raw * CURRENT_ADC_MA_PER_LSB
+#define VOLTAGE_ADC_MV_PER_LSB  12.15f   // placeholder: 24000 mV / 4095
+#define CURRENT_ADC_MA_PER_LSB  0.49f   // placeholder: 2000 mA / 4095
+
+#define SETPOINT_DISPLAY_TICKS  20      // 10 × 50 ms = 0.5 s
+
 #define UNIT_Amps 0
 #define UNIT_Volts 1
+
+typedef enum {
+    EDIT_VOLTAGE,
+    EDIT_CURRENT
+} edit_mode_t;
+
 
 static volatile int16_t encoder_delta = 0;
 static uint8_t prev_state = 0;
@@ -91,6 +110,7 @@ void encoder_task(void);
 
 void I2C_Write(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght);
 bool I2C_Read(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght);
+uint16_t ADC_ReadRaw(uint8_t address);
 void writeDisplay(float number);
 void writeUnit(uint8_t unit);
 void displayCommit(void);
@@ -113,25 +133,86 @@ int main(void) {
 		NOP();
 	}
 
-	uint16_t voltage_set_point = 0;
-	uint16_t current_set_point = 0;
+	uint16_t voltage_set_point = 3300;
+	uint16_t current_set_point = 100;
+	edit_mode_t edit_mode = EDIT_VOLTAGE;
+	bool output_enabled = false;
+	uint8_t setpoint_display_timer = 0;
 
+	uint8_t prev_btn_enc    = 1;
+	uint8_t prev_btn_enable = 1;
+
+	IO_RA4_SetLow();
 	setOutputVoltage(voltage_set_point);
 	setCurrentLimit(current_set_point);
 
 	while (1) {
+		// --- buttons (active low, hardware debounced) ---
+		uint8_t btn_enc    = IO_RC4_GetValue();
+		uint8_t btn_enable = IO_RC3_GetValue();
+
+		if (!btn_enc && prev_btn_enc) {
+			output_enabled = !output_enabled;
+			if (output_enabled) {
+				IO_RA4_SetHigh();
+				setOutputVoltage(voltage_set_point);
+			} else {
+				IO_RA4_SetLow();
+				setOutputVoltage(0);
+			}
+		}
+		if (!btn_enable && prev_btn_enable) {
+			edit_mode = (edit_mode == EDIT_VOLTAGE) ? EDIT_CURRENT : EDIT_VOLTAGE;
+		}
+		prev_btn_enc    = btn_enc;
+		prev_btn_enable = btn_enable;
+
+		// --- encoder ---
 		int16_t delta = encoder_get_delta();
 		if (delta != 0) {
-			int32_t new_v = (int32_t)voltage_set_point + (int32_t)delta * VOLTAGE_STEP_MV;
-			if (new_v < VOLTAGE_MIN_MV) new_v = VOLTAGE_MIN_MV;
-			if (new_v > VOLTAGE_MAX_MV) new_v = VOLTAGE_MAX_MV;
-			voltage_set_point = (uint16_t)new_v;
-			setOutputVoltage(voltage_set_point);
+			if (edit_mode == EDIT_VOLTAGE) {
+				int32_t new_v = (int32_t)voltage_set_point + (int32_t)delta * VOLTAGE_STEP_MV;
+				if (new_v < VOLTAGE_MIN_MV) new_v = VOLTAGE_MIN_MV;
+				if (new_v > VOLTAGE_MAX_MV) new_v = VOLTAGE_MAX_MV;
+				voltage_set_point = (uint16_t)new_v;
+				setOutputVoltage(voltage_set_point);
+			} else {
+				int32_t new_i = (int32_t)current_set_point + (int32_t)delta * CURRENT_STEP_MA;
+				if (new_i < CURRENT_MIN_MA) new_i = CURRENT_MIN_MA;
+				if (new_i > CURRENT_MAX_MA) new_i = CURRENT_MAX_MA;
+				current_set_point = (uint16_t)new_i;
+				setCurrentLimit(current_set_point);
+			}
+			if (output_enabled) {
+				setpoint_display_timer = SETPOINT_DISPLAY_TICKS;
+			}
 		}
+		if (setpoint_display_timer > 0) setpoint_display_timer--;
 
-		writeDisplay(voltage_set_point / 1000.0f);
-		writeUnit(UNIT_Volts);
+		// --- display ---
+		bool show_setpoint = !output_enabled || (setpoint_display_timer > 0);
+
+		if (edit_mode == EDIT_VOLTAGE) {
+			float display_val = show_setpoint
+				? voltage_set_point / 1000.0f
+				: ADC_ReadRaw(ADC_ADDR_VOLTAGE) * VOLTAGE_ADC_MV_PER_LSB / 1000.0f;
+			writeDisplay(display_val);
+			writeUnit(UNIT_Volts);
+		} else {
+			float display_val = show_setpoint
+				? current_set_point / 1000.0f
+				: ADC_ReadRaw(ADC_ADDR_CURRENT) * CURRENT_ADC_MA_PER_LSB / 1000.0f;
+			writeDisplay(display_val);
+			writeUnit(UNIT_Amps);
+		}
 		displayCommit();
+
+		// --- LEDs: top = output state, bottom = edit mode ---
+		setLeds(
+			output_enabled ? LED_GREEN : LED_RED,
+			edit_mode == EDIT_VOLTAGE ? LED_GREEN : LED_RED
+		);
+
 		__delay_ms(50);
 	}
 }
@@ -148,6 +229,18 @@ bool I2C_Read(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght) {
 	while (I2C1_Host.IsBusy()) {
 		I2C1_Host.Tasks();
 	}
+}
+
+#define ADC_AVG_SAMPLES 20
+
+uint16_t ADC_ReadRaw(uint8_t address) {
+	uint8_t data[2];
+	uint32_t sum = 0;
+	for (uint8_t i = 0; i < ADC_AVG_SAMPLES; i++) {
+		I2C_Read(address, data, 2);
+		sum += ((uint16_t)(data[0] & 0x0F) << 8) | data[1];
+	}
+	return (uint16_t)(sum / ADC_AVG_SAMPLES);
 }
 
 void writeDisplay(float number) {

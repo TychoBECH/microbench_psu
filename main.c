@@ -158,6 +158,7 @@ int main(void) {
 	uint8_t setpoint_display_timer = 0;
 	uint8_t long_press_counter = 0;
 	uint8_t eeprom_dirty_timer = 0;
+	uint8_t led_flash_counter = 0;
 
 	uint8_t prev_btn_enc    = 1;
 	uint8_t prev_btn_enable = 1;
@@ -272,11 +273,14 @@ int main(void) {
 		}
 		displayCommit();
 
-		// --- LEDs: top = output state, bottom = edit mode ---
-		setLeds(
-			output_enabled ? LED_GREEN : LED_RED,
-			edit_mode == EDIT_VOLTAGE ? LED_GREEN : LED_RED
-		);
+		// --- LEDs: both flash green when output on, both off when output off ---
+		led_flash_counter++;
+		if (output_enabled) {
+			uint8_t led = (led_flash_counter & 0x08) ? LED_GREEN : LED_OFF;
+			setLeds(led, led);
+		} else {
+			setLeds(LED_OFF, LED_OFF);
+		}
 
 		__delay_ms(50);
 	}

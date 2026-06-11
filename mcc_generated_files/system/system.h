@@ -40,6 +40,7 @@
 #include <stdbool.h>
 #include "config_bits.h"
 #include "../system/pins.h"
+#include "../nvm/nvm.h"
 #include "../timer/tmr4.h"
 #include "../system/interrupt.h"
 #include "../system/clock.h"

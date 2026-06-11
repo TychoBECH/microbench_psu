@@ -88,7 +88,8 @@ const int8_t encoderLut[16] = {
 #define VOLTAGE_ADC_MV_PER_LSB  12.15f   // placeholder: 24000 mV / 4095
 #define CURRENT_ADC_MA_PER_LSB  0.49f   // placeholder: 2000 mA / 4095
 
-#define SETPOINT_DISPLAY_TICKS  20      // 10 × 50 ms = 0.5 s
+#define SETPOINT_DISPLAY_TICKS  20      // 20 × 50 ms = 1.0 s
+#define LONG_PRESS_TICKS        20      // 20 × 50 ms = 1.0 s
 
 #define UNIT_Amps 0
 #define UNIT_Volts 1
@@ -114,6 +115,7 @@ uint16_t ADC_ReadRaw(uint8_t address);
 void writeDisplay(float number);
 void writeUnit(uint8_t unit);
 void displayCommit(void);
+void displayBlank(void);
 void setLeds(uint8_t ledTop, uint8_t ledBottom);
 void setOutputVoltage(uint16_t milivolt);
 void setCurrentLimit(uint16_t miliamp);
@@ -137,33 +139,73 @@ int main(void) {
 	uint16_t current_set_point = 100;
 	edit_mode_t edit_mode = EDIT_VOLTAGE;
 	bool output_enabled = false;
+	bool standby = false;
 	uint8_t setpoint_display_timer = 0;
+	uint8_t long_press_counter = 0;
 
 	uint8_t prev_btn_enc    = 1;
 	uint8_t prev_btn_enable = 1;
 
 	IO_RA4_SetLow();
-	setOutputVoltage(voltage_set_point);
+	setOutputVoltage(0);
 	setCurrentLimit(current_set_point);
 
 	while (1) {
-		// --- buttons (active low, hardware debounced) ---
 		uint8_t btn_enc    = IO_RC4_GetValue();
 		uint8_t btn_enable = IO_RC3_GetValue();
 
-		if (!btn_enc && prev_btn_enc) {
-			output_enabled = !output_enabled;
-			if (output_enabled) {
-				IO_RA4_SetHigh();
-				setOutputVoltage(voltage_set_point);
-			} else {
-				IO_RA4_SetLow();
-				setOutputVoltage(0);
+		// --- standby mode ---
+		if (standby) {
+			// wake on falling edge only — ignores the held button that triggered sleep
+			if ((!btn_enc && prev_btn_enc) || (!btn_enable && prev_btn_enable)) {
+				standby = false;
+				long_press_counter = 0;
 			}
+			prev_btn_enc    = btn_enc;
+			prev_btn_enable = btn_enable;
+			__delay_ms(50);
+			continue;
 		}
+
+		// --- long press detection on encoder button (RC4) ---
+		if (!btn_enc) {
+			long_press_counter++;
+			if (long_press_counter >= LONG_PRESS_TICKS) {
+				// enter standby
+				standby = true;
+				long_press_counter = 0;
+				if (output_enabled) {
+					output_enabled = false;
+					IO_RA4_SetLow();
+					setOutputVoltage(0);
+				}
+				displayBlank();
+				setLeds(LED_OFF, LED_OFF);
+				prev_btn_enc    = btn_enc;
+				prev_btn_enable = btn_enable;
+				__delay_ms(50);
+				continue;
+			}
+		} else {
+			// --- short press: released before long press threshold ---
+			if (prev_btn_enc == 0 && long_press_counter < LONG_PRESS_TICKS) {
+				output_enabled = !output_enabled;
+				if (output_enabled) {
+					IO_RA4_SetHigh();
+					setOutputVoltage(voltage_set_point);
+				} else {
+					IO_RA4_SetLow();
+					setOutputVoltage(0);
+				}
+			}
+			long_press_counter = 0;
+		}
+
+		// --- enable button (RC3): cycle V/A ---
 		if (!btn_enable && prev_btn_enable) {
 			edit_mode = (edit_mode == EDIT_VOLTAGE) ? EDIT_CURRENT : EDIT_VOLTAGE;
 		}
+
 		prev_btn_enc    = btn_enc;
 		prev_btn_enable = btn_enable;
 
@@ -175,7 +217,7 @@ int main(void) {
 				if (new_v < VOLTAGE_MIN_MV) new_v = VOLTAGE_MIN_MV;
 				if (new_v > VOLTAGE_MAX_MV) new_v = VOLTAGE_MAX_MV;
 				voltage_set_point = (uint16_t)new_v;
-				setOutputVoltage(voltage_set_point);
+				if (output_enabled) setOutputVoltage(voltage_set_point);
 			} else {
 				int32_t new_i = (int32_t)current_set_point + (int32_t)delta * CURRENT_STEP_MA;
 				if (new_i < CURRENT_MIN_MA) new_i = CURRENT_MIN_MA;
@@ -291,6 +333,14 @@ void writeUnit(uint8_t unit) {
 void displayCommit(void) {
 	uint8_t update[] = {0x0C, 0x00};
 	I2C_Write(clientAddr, update, 2);
+}
+
+void displayBlank(void) {
+	uint8_t clear[] = {0x01, 0x00, 0x02, 0x00, 0x07, 0x00, 0x04, 0x00};
+	I2C_Write(clientAddr, clear, 8);
+	uint8_t clearUnit[] = {0x04, 0x00};
+	I2C_Write(clientAddr, clearUnit, 2);
+	displayCommit();
 }
 
 void setLeds(uint8_t ledTop, uint8_t ledBottom) {

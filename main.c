@@ -92,8 +92,9 @@ void encoder_task(void);
 void I2C_Write(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght);
 bool I2C_Read(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght);
 void writeDisplay(float number);
-void setLeds(uint8_t ledTop, uint8_t ledBottom);
 void writeUnit(uint8_t unit);
+void displayCommit(void);
+void setLeds(uint8_t ledTop, uint8_t ledBottom);
 void setOutputVoltage(uint16_t milivolt);
 void setCurrentLimit(uint16_t miliamp);
 
@@ -129,8 +130,8 @@ int main(void) {
 		}
 
 		writeDisplay(voltage_set_point / 1000.0f);
-		__delay_us(50);
 		writeUnit(UNIT_Volts);
+		displayCommit();
 		__delay_ms(50);
 	}
 }
@@ -180,6 +181,21 @@ void writeDisplay(float number) {
 	}
 
 	I2C_Write(clientAddr, transmitionData, 8);
+}
+
+void writeUnit(uint8_t unit) {
+	uint8_t transmitionData[] = {0x04, 0x00};
+
+	if (unit == UNIT_Volts) {
+		transmitionData[1] = 0b11110010;
+	}
+	if (unit == UNIT_Amps) {
+		transmitionData[1] = 0b10110111;
+	}
+	I2C_Write(clientAddr, transmitionData, 2);
+}
+
+void displayCommit(void) {
 	uint8_t update[] = {0x0C, 0x00};
 	I2C_Write(clientAddr, update, 2);
 }
@@ -193,24 +209,7 @@ void setLeds(uint8_t ledTop, uint8_t ledBottom) {
 	//		Bit5-> Bottom Green
 
 	I2C_Write(clientAddr, transmitionData, 2);
-	uint8_t update[] = {0x0C, 0x00};
-	I2C_Write(clientAddr, update, 2);
-}
-
-void writeUnit(uint8_t unit) {
-	uint8_t transmitionData[] = {0x04, 0x00};
-
-	if (unit == UNIT_Volts) {
-		transmitionData[1] = 0b11110010;
-	}
-	if (unit == UNIT_Amps) {
-		transmitionData[1] = 0b10110111;
-	}
-	I2C_Write(clientAddr, transmitionData, 8);
-
-	//Update display
-	uint8_t update[] = {0x0C, 0x00};
-	I2C_Write(clientAddr, update, 2);
+	displayCommit();
 }
 
 void setOutputVoltage(uint16_t milivolt) {

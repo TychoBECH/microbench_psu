@@ -32,6 +32,7 @@
  */
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/timer/tmr4.h"
+#include "mcc_generated_files/nvm/nvm.h"
 #include "mcp47cxdx.h"
 #include <stdbool.h>
 
@@ -90,6 +91,15 @@ const int8_t encoderLut[16] = {
 
 #define SETPOINT_DISPLAY_TICKS  20      // 20 × 50 ms = 1.0 s
 #define LONG_PRESS_TICKS        20      // 20 × 50 ms = 1.0 s
+#define EEPROM_WRITE_TICKS      100     // 100 × 50 ms = 5.0 s
+
+// EEPROM layout
+#define EEPROM_MAGIC_ADDR    0x00
+#define EEPROM_MAGIC_VALUE   0xAB
+#define EEPROM_VOLTAGE_HI    0x01
+#define EEPROM_VOLTAGE_LO    0x02
+#define EEPROM_CURRENT_HI    0x03
+#define EEPROM_CURRENT_LO    0x04
 
 #define UNIT_Amps 0
 #define UNIT_Volts 1
@@ -108,6 +118,9 @@ int16_t encoder_get_delta(void);
 void encoder_task(void);
 
 
+
+void settings_save(uint16_t voltage, uint16_t current);
+void settings_load(uint16_t *voltage, uint16_t *current);
 
 void I2C_Write(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght);
 bool I2C_Read(uint8_t clientAddress, uint8_t *data, uint8_t dataLenght);
@@ -137,11 +150,14 @@ int main(void) {
 
 	uint16_t voltage_set_point = 3300;
 	uint16_t current_set_point = 100;
+	settings_load(&voltage_set_point, &current_set_point);
+
 	edit_mode_t edit_mode = EDIT_VOLTAGE;
 	bool output_enabled = false;
 	bool standby = false;
 	uint8_t setpoint_display_timer = 0;
 	uint8_t long_press_counter = 0;
+	uint8_t eeprom_dirty_timer = 0;
 
 	uint8_t prev_btn_enc    = 1;
 	uint8_t prev_btn_enable = 1;
@@ -225,11 +241,18 @@ int main(void) {
 				current_set_point = (uint16_t)new_i;
 				setCurrentLimit(current_set_point);
 			}
-			if (output_enabled) {
-				setpoint_display_timer = SETPOINT_DISPLAY_TICKS;
-			}
+			if (output_enabled) setpoint_display_timer = SETPOINT_DISPLAY_TICKS;
+			eeprom_dirty_timer = EEPROM_WRITE_TICKS;
 		}
 		if (setpoint_display_timer > 0) setpoint_display_timer--;
+
+		// --- EEPROM deferred write ---
+		if (eeprom_dirty_timer > 0) {
+			eeprom_dirty_timer--;
+			if (eeprom_dirty_timer == 0) {
+				settings_save(voltage_set_point, current_set_point);
+			}
+		}
 
 		// --- display ---
 		bool show_setpoint = !output_enabled || (setpoint_display_timer > 0);
@@ -375,6 +398,31 @@ uint8_t encoder_read_pins(void) {
 	uint8_t a = IO_RC7_GetValue();
 	uint8_t b = IO_RC6_GetValue();
 	return (a << 1) | b;
+}
+
+void settings_save(uint16_t voltage, uint16_t current) {
+	NVM_UnlockKeySet(UNLOCK_KEY);
+	EEPROM_Write(EEPROM_START_ADDRESS + EEPROM_VOLTAGE_HI, voltage >> 8);
+	while (NVM_IsBusy());
+	EEPROM_Write(EEPROM_START_ADDRESS + EEPROM_VOLTAGE_LO, voltage & 0xFF);
+	while (NVM_IsBusy());
+	EEPROM_Write(EEPROM_START_ADDRESS + EEPROM_CURRENT_HI, current >> 8);
+	while (NVM_IsBusy());
+	EEPROM_Write(EEPROM_START_ADDRESS + EEPROM_CURRENT_LO, current & 0xFF);
+	while (NVM_IsBusy());
+	EEPROM_Write(EEPROM_START_ADDRESS + EEPROM_MAGIC_ADDR, EEPROM_MAGIC_VALUE);
+	while (NVM_IsBusy());
+	NVM_UnlockKeyClear();
+}
+
+void settings_load(uint16_t *voltage, uint16_t *current) {
+	if (EEPROM_Read(EEPROM_START_ADDRESS + EEPROM_MAGIC_ADDR) != EEPROM_MAGIC_VALUE) {
+		return; // no saved data — keep defaults
+	}
+	*voltage = ((uint16_t)EEPROM_Read(EEPROM_START_ADDRESS + EEPROM_VOLTAGE_HI) << 8)
+	         |  (uint16_t)EEPROM_Read(EEPROM_START_ADDRESS + EEPROM_VOLTAGE_LO);
+	*current = ((uint16_t)EEPROM_Read(EEPROM_START_ADDRESS + EEPROM_CURRENT_HI) << 8)
+	         |  (uint16_t)EEPROM_Read(EEPROM_START_ADDRESS + EEPROM_CURRENT_LO);
 }
 
 void encoder_task(void) {

@@ -84,18 +84,16 @@ const int8_t encoderLut[16] = {
 #define ADC_ADDR_CURRENT  0b1001000
 #define ADC_ADDR_TEMP     0b1001010
 
-// Scaling: adjust these to match your hardware (voltage divider / sense amp gain)
-// mV = raw * VOLTAGE_ADC_MV_PER_LSB,  mA = raw * CURRENT_ADC_MA_PER_LSB
 #define VOLTAGE_ADC_MV_PER_LSB  12.15f  // placeholder: 24000 mV / 4095
 #define CURRENT_ADC_MA_PER_LSB  1.1745f // 5000 mV / 4095 LSB / 1.03958 mV per mA
 #define TEMP_ADC_C_PER_LSB      0.0407f // 5000 mV / 4095 LSB / 30 mV per °C
 
-#define TEMP_SHUTDOWN_C  60.0f
-#define TEMP_RECOVER_C   55.0f
+#define TEMP_SHUTDOWN_C  85.0f
+#define TEMP_RECOVER_C   70.0f
 
-#define SETPOINT_DISPLAY_TICKS  20      // 20 × 50 ms = 1.0 s
-#define LONG_PRESS_TICKS        20      // 20 × 50 ms = 1.0 s
-#define EEPROM_WRITE_TICKS      100     // 100 × 50 ms = 5.0 s
+#define SETPOINT_DISPLAY_TICKS  20      // 20 @ 50 ms = 1.0 s
+#define LONG_PRESS_TICKS        20      // 20 @ 50 ms = 1.0 s
+#define EEPROM_WRITE_TICKS      100     // 100 @ 50 ms = 5.0 s
 
 // EEPROM layout
 #define EEPROM_MAGIC_ADDR    0x00
@@ -178,7 +176,7 @@ int main(void) {
 
 		// --- standby mode ---
 		if (standby) {
-			// wake on falling edge only — ignores the held button that triggered sleep
+			// wake on falling edge only and ignores the held button that triggered sleep
 			if ((!btn_enc && prev_btn_enc) || (!btn_enable && prev_btn_enable)) {
 				standby = false;
 				long_press_counter = 0;

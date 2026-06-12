@@ -86,8 +86,12 @@ const int8_t encoderLut[16] = {
 
 // Scaling: adjust these to match your hardware (voltage divider / sense amp gain)
 // mV = raw * VOLTAGE_ADC_MV_PER_LSB,  mA = raw * CURRENT_ADC_MA_PER_LSB
-#define VOLTAGE_ADC_MV_PER_LSB  12.15f   // placeholder: 24000 mV / 4095
-#define CURRENT_ADC_MA_PER_LSB  0.49f   // placeholder: 2000 mA / 4095
+#define VOLTAGE_ADC_MV_PER_LSB  12.15f  // placeholder: 24000 mV / 4095
+#define CURRENT_ADC_MA_PER_LSB  1.1745f // 5000 mV / 4095 LSB / 1.03958 mV per mA
+#define TEMP_ADC_C_PER_LSB      0.0407f // 5000 mV / 4095 LSB / 30 mV per °C
+
+#define TEMP_SHUTDOWN_C  60.0f
+#define TEMP_RECOVER_C   55.0f
 
 #define SETPOINT_DISPLAY_TICKS  20      // 20 × 50 ms = 1.0 s
 #define LONG_PRESS_TICKS        20      // 20 × 50 ms = 1.0 s
@@ -155,6 +159,7 @@ int main(void) {
 	edit_mode_t edit_mode = EDIT_VOLTAGE;
 	bool output_enabled = false;
 	bool standby = false;
+	bool over_temp = false;
 	uint8_t setpoint_display_timer = 0;
 	uint8_t long_press_counter = 0;
 	uint8_t eeprom_dirty_timer = 0;
@@ -206,13 +211,15 @@ int main(void) {
 		} else {
 			// --- short press: released before long press threshold ---
 			if (prev_btn_enc == 0 && long_press_counter < LONG_PRESS_TICKS) {
-				output_enabled = !output_enabled;
-				if (output_enabled) {
-					IO_RA4_SetHigh();
-					setOutputVoltage(voltage_set_point);
-				} else {
-					IO_RA4_SetLow();
-					setOutputVoltage(0);
+				if (!over_temp) {
+					output_enabled = !output_enabled;
+					if (output_enabled) {
+						IO_RA4_SetHigh();
+						setOutputVoltage(voltage_set_point);
+					} else {
+						IO_RA4_SetLow();
+						setOutputVoltage(0);
+					}
 				}
 			}
 			long_press_counter = 0;
@@ -247,6 +254,17 @@ int main(void) {
 		}
 		if (setpoint_display_timer > 0) setpoint_display_timer--;
 
+		// --- over-temperature protection ---
+		float temp_c = ADC_ReadRaw(ADC_ADDR_TEMP) * TEMP_ADC_C_PER_LSB;
+		if (!over_temp && temp_c >= TEMP_SHUTDOWN_C) {
+			over_temp = true;
+			output_enabled = false;
+			IO_RA4_SetLow();
+			setOutputVoltage(0);
+		} else if (over_temp && temp_c < TEMP_RECOVER_C) {
+			over_temp = false;
+		}
+
 		// --- EEPROM deferred write ---
 		if (eeprom_dirty_timer > 0) {
 			eeprom_dirty_timer--;
@@ -256,22 +274,28 @@ int main(void) {
 		}
 
 		// --- display ---
-		bool show_setpoint = !output_enabled || (setpoint_display_timer > 0);
-
-		if (edit_mode == EDIT_VOLTAGE) {
-			float display_val = show_setpoint
-				? voltage_set_point / 1000.0f
-				: ADC_ReadRaw(ADC_ADDR_VOLTAGE) * VOLTAGE_ADC_MV_PER_LSB / 1000.0f;
-			writeDisplay(display_val);
-			writeUnit(UNIT_Volts);
+		if (over_temp) {
+			writeDisplay(temp_c);
+			writeUnit(UNIT_Volts); // no temperature unit symbol available, blank is clearest
+			displayCommit();
 		} else {
-			float display_val = show_setpoint
-				? current_set_point / 1000.0f
-				: ADC_ReadRaw(ADC_ADDR_CURRENT) * CURRENT_ADC_MA_PER_LSB / 1000.0f;
-			writeDisplay(display_val);
-			writeUnit(UNIT_Amps);
+			bool show_setpoint = !output_enabled || (setpoint_display_timer > 0);
+
+			if (edit_mode == EDIT_VOLTAGE) {
+				float display_val = show_setpoint
+					? voltage_set_point / 1000.0f
+					: ADC_ReadRaw(ADC_ADDR_VOLTAGE) * VOLTAGE_ADC_MV_PER_LSB / 1000.0f;
+				writeDisplay(display_val);
+				writeUnit(UNIT_Volts);
+			} else {
+				float display_val = show_setpoint
+					? current_set_point / 1000.0f
+					: ADC_ReadRaw(ADC_ADDR_CURRENT) * CURRENT_ADC_MA_PER_LSB / 1000.0f;
+				writeDisplay(display_val);
+				writeUnit(UNIT_Amps);
+			}
+			displayCommit();
 		}
-		displayCommit();
 
 		// --- LEDs: both flash green when output on, both off when output off ---
 		led_flash_counter++;

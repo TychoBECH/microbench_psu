@@ -45,6 +45,7 @@ void SYSTEM_Initialize(void)
     I2C1_Host_Initialize();
     NVM_Initialize();
     TMR4_Initialize();
+    UART1_Initialize();
     INTERRUPT_Initialize();
 }
 

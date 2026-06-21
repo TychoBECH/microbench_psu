@@ -32,6 +32,13 @@
         </logicalFolder>
       </logicalFolder>
       <itemPath>mcp47cxdx.h</itemPath>
+      <itemPath>i2c_bus.h</itemPath>
+      <itemPath>display.h</itemPath>
+      <itemPath>encoder.h</itemPath>
+      <itemPath>adc.h</itemPath>
+      <itemPath>eeprom_settings.h</itemPath>
+      <itemPath>psu.h</itemPath>
+      <itemPath>scpi.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -81,6 +88,13 @@
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>mcp47cxdx.c</itemPath>
+      <itemPath>i2c_bus.c</itemPath>
+      <itemPath>display.c</itemPath>
+      <itemPath>encoder.c</itemPath>
+      <itemPath>adc.c</itemPath>
+      <itemPath>eeprom_settings.c</itemPath>
+      <itemPath>psu.c</itemPath>
+      <itemPath>scpi.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>

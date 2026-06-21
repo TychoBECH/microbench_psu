@@ -6,11 +6,11 @@
 // Scaling: adjust to match the hardware (voltage divider / current sense gain / thermistor)
 #define VOLTAGE_ADC_MV_PER_LSB  12.15f  // calibrated against hardware voltage divider
 #define CURRENT_ADC_MA_PER_LSB  1.1745f // 5000 mV / 4095 LSB / 1.03958 mV per mA
-#define TEMP_ADC_C_PER_LSB      0.0407f // 5000 mV / 4095 LSB / 30 mV per °C
+#define TEMP_ADC_C_PER_LSB      0.0407f // 5000 mV / 4095 LSB / 30 mV per degC
 
 // Returned when an I2C transfer fails (bus stuck, ADC unresponsive). Deliberately
 // the max 12-bit value so a fault reads as "hot"/"high" rather than silently
-// looking like zero — a failed temperature read must never look safe.
+// looking like zero -- a failed temperature read must never look safe.
 #define ADC_FAULT_RAW_VALUE 0x0FFF
 
 uint16_t ADC_ReadRaw(uint8_t address) {

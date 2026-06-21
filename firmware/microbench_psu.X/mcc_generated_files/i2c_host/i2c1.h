@@ -12,13 +12,13 @@
  */
 
 /*
-© [2026] Microchip Technology Inc. and its subsidiaries.
+(c) [2026] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
     You are responsible for complying with 3rd party license terms  
     applicable to your use of 3rd party software (including open source  
-    software) that may accompany Microchip software. SOFTWARE IS ?AS IS.? 
+    software) that may accompany Microchip software. SOFTWARE IS "AS IS." 
     NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS 
     SOFTWARE, INCLUDING ANY IMPLIED WARRANTIES OF NON-INFRINGEMENT,  
     MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT 
@@ -26,7 +26,7 @@
     INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY 
     KIND WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF 
     MICROCHIP HAS BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE 
-    FORESEEABLE. TO THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP?S 
+    FORESEEABLE. TO THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S 
     TOTAL LIABILITY ON ALL CLAIMS RELATED TO THE SOFTWARE WILL NOT 
     EXCEED AMOUNT OF FEES, IF ANY, YOU PAID DIRECTLY TO MICROCHIP FOR 
     THIS SOFTWARE.
@@ -70,7 +70,7 @@ extern const i2c_host_interface_t I2C1_Host;
 
 /**
  * @ingroup i2c_host
- * @brief Initializes the I2C1 host module according to the settings specified in the MPLAB® Code Configurator Melody UI.
+ * @brief Initializes the I2C1 host module according to the settings specified in the MPLAB(R) Code Configurator Melody UI.
  * @param None.
  * @return None. \n
  */

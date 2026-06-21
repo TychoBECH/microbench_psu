@@ -26,7 +26,7 @@ void settings_save(uint16_t voltage, uint16_t current) {
 
 void settings_load(uint16_t *voltage, uint16_t *current) {
 	if (EEPROM_Read(EEPROM_START_ADDRESS + EEPROM_MAGIC_ADDR) != EEPROM_MAGIC_VALUE) {
-		return; // no saved data — keep defaults
+		return; // no saved data -- keep defaults
 	}
 	*voltage = ((uint16_t)EEPROM_Read(EEPROM_START_ADDRESS + EEPROM_VOLTAGE_HI) << 8)
 	         |  (uint16_t)EEPROM_Read(EEPROM_START_ADDRESS + EEPROM_VOLTAGE_LO);

@@ -3,7 +3,7 @@
 
 // Approximate bound on poll iterations while waiting for a transfer to finish.
 // There's no hardware timer wired into this loop, so this is a coarse
-// "stop waiting eventually" guard rather than a precise time limit — it exists
+// "stop waiting eventually" guard rather than a precise time limit -- it exists
 // so a stuck bus or unresponsive device hangs the firmware for a bounded
 // number of loop iterations instead of forever.
 #define I2C_TIMEOUT_ITERATIONS 10000

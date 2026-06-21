@@ -26,7 +26,7 @@ bool PSU_IsOverTemp(void);
 uint16_t PSU_GetVoltageSetpoint(void);
 uint16_t PSU_GetCurrentSetpoint(void);
 
-// Regulator temperature as of the last PSU_Task() call (°C).
+// Regulator temperature as of the last PSU_Task() call (degC).
 float PSU_GetTempC(void);
 
 #endif	/* PSU_H */

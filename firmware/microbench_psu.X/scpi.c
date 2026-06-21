@@ -178,7 +178,7 @@ void SCPI_Task(void) {
 			waited_ms++;
 			total_waited_ms++;
 			if (waited_ms >= SCPI_BYTE_TIMEOUT_MS || total_waited_ms >= SCPI_LINE_TIMEOUT_MS) {
-				return; // incomplete line — drop it
+				return; // incomplete line -- drop it
 			}
 		}
 

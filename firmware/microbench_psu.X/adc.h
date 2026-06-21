@@ -13,7 +13,7 @@ uint16_t ADC_ReadRaw(uint8_t address);
 // Measured values scaled to physical units, for the front panel display.
 float ADC_ReadVoltageV(void); // measured output voltage in volts
 float ADC_ReadCurrentA(void); // measured output current in amps
-float ADC_ReadTempC(void);    // measured regulator temperature in °C
+float ADC_ReadTempC(void);    // measured regulator temperature in degC
 
 // Same measurements as milli-unit integers, for SCPI response formatting.
 int32_t ADC_ReadVoltageMv(void);

@@ -10,13 +10,13 @@
  */
 
 /*
-© [2026] Microchip Technology Inc. and its subsidiaries.
+(c) [2026] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
     You are responsible for complying with 3rd party license terms  
     applicable to your use of 3rd party software (including open source  
-    software) that may accompany Microchip software. SOFTWARE IS ?AS IS.? 
+    software) that may accompany Microchip software. SOFTWARE IS "AS IS." 
     NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS 
     SOFTWARE, INCLUDING ANY IMPLIED WARRANTIES OF NON-INFRINGEMENT,  
     MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT 
@@ -24,7 +24,7 @@
     INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY 
     KIND WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF 
     MICROCHIP HAS BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE 
-    FORESEEABLE. TO THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP?S 
+    FORESEEABLE. TO THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S 
     TOTAL LIABILITY ON ALL CLAIMS RELATED TO THE SOFTWARE WILL NOT 
     EXCEED AMOUNT OF FEES, IF ANY, YOU PAID DIRECTLY TO MICROCHIP FOR 
     THIS SOFTWARE.
@@ -174,7 +174,7 @@ flash_data_t FLASH_Read(flash_address_t address);
  * @brief Reads one entire Flash row/page from the given starting address of the row (the first byte location).
  *      The size of the buffer must be one Flash row and the address must be aligned with the row boundary.
  *      Use FLASH_PageAddressGet() to obtain the starting address of the row.
- *      As this is a non-portable API, it may not be supported by all 8-bit PIC® and AVR® devices. 
+ *      As this is a non-portable API, it may not be supported by all 8-bit PIC(R) and AVR(R) devices. 
  * @param [in] address -  Starting address of the Flash row to be read. 
  * @param [out] *dataBuffer - Buffer to hold the data read from the given Flash row.
  *                           If the data is to be read in buffer RAM, then an array with address @ref BUFFER_RAM_START_ADDRESS must be used.
@@ -185,7 +185,7 @@ nvm_status_t FLASH_RowRead(flash_address_t address, flash_data_t *dataBuffer);
 /**
  * @ingroup nvm_driver
  * @brief Writes a word at the given Flash address.
- *        As this is a non-portable API, it may not be supported by all 8-bit PIC® and AVR® devices.
+ *        As this is a non-portable API, it may not be supported by all 8-bit PIC(R) and AVR(R) devices.
  * @pre Erase the Flash location before writing.
  *      Set the unlock key using the @ref NVM_UnlockKeySet() API, if the key has been cleared before.
  *      AoU: **Address Qualifiers** must be configured to **Require** under *Project Properties>XC8 Compiler>Optimizations*.

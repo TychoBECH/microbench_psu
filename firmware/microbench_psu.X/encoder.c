@@ -14,12 +14,12 @@ static uint8_t prev_state = 0;
 static uint8_t encoder_read_pins(void) {
 	uint8_t a = IO_RC7_GetValue();
 	uint8_t b = IO_RC6_GetValue();
-	return (a << 1) | b;
+	return (uint8_t)((a << 1) | b);
 }
 
 void encoder_task(void) {
 	uint8_t curr_state = encoder_read_pins();
-	uint8_t index = (prev_state << 2) | curr_state;
+	uint8_t index = (uint8_t)((prev_state << 2) | curr_state);
 	encoder_delta += encoderLut[index];
 	prev_state = curr_state;
 }

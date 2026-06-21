@@ -83,7 +83,7 @@ void displayBlank(void) {
 void setLeds(uint8_t ledTop, uint8_t ledBottom) {
 	uint8_t transmitionData[] = {0x08, 0x00};
 
-	transmitionData[1] = ledTop | (ledBottom << 5);
+	transmitionData[1] = (uint8_t)(ledTop | (ledBottom << 5));
 	//Notes:Bit0-> Top Green
 	//		Bit1-> Top Red
 	//		Bit5-> Bottom Green

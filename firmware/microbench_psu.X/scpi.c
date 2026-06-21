@@ -99,7 +99,7 @@ static void SCPI_ProcessLine(char *line) {
 	}
 
 	if (strcmp(line, "*IDN?") == 0) {
-		UART_WriteString("TychoBECH,LabPSU,1,1.0\r\n");
+		UART_WriteString("TychoBECH,MicrobenchPSU,1,1.0\r\n");
 
 	} else if (strcmp(line, "*RST") == 0) {
 		PSU_SetOutputEnabled(false);

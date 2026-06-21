@@ -1,5 +1,7 @@
 # Display board
 
-Display and LEDs.
+7-segment display and LEDs.
 
-Altium project files go directly in this folder. Generated outputs (gerbers, drill files, assembly drawings) go in `outputs/`.
+Altium project: `display-board.PrjPcb` / `display-board.PcbDoc` / `display-board.SchDoc`.
+
+Generated outputs (gerbers, NC drill files, STEP export) are in `outputs/`.

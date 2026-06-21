@@ -2,4 +2,6 @@
 
 Rotary encoder and buttons.
 
-Altium project files go directly in this folder. Generated outputs (gerbers, drill files, assembly drawings) go in `outputs/`.
+Altium project: `ui-board.PrjPcb` / `ui-board.PcbDoc` / `ui-board.SchDoc`.
+
+Generated outputs (gerbers, NC drill files, STEP export) are in `outputs/`.

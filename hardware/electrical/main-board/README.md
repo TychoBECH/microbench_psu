@@ -1,5 +1,7 @@
 # Main board
 
-Power supply, MCU (PIC18F16Q40), and USB.
+Power supply (DC/DC conversion, adjustable output stage), MCU (PIC18F16Q40), and USB.
 
-Altium project files go directly in this folder. Generated outputs (gerbers, drill files, assembly drawings) go in `outputs/`.
+Altium project: `main-board.PrjPcb` / `main-board.PcbDoc`, with schematic sheets covering the overview, the adjustable DC/DC converter, the output stage, and USB. References the shared `Parts_Library/` submodule for schematic symbols, footprints, and 3D models.
+
+Generated outputs (gerbers, NC drill files, STEP export) are in `outputs/`.

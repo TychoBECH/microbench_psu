@@ -1,0 +1,19 @@
+----------------------------------------------------------------------------------------------------------------------------------
+NCDrill File Report For: ui-board.PcbDoc   21.06.2026  16:35:03
+----------------------------------------------------------------------------------------------------------------------------------
+
+Layer Pair : Top Layer to Bottom Layer
+ASCII RoundHoles File : ui-board-RoundHoles.TXT
+ASCII SlotHoles File : ui-board-SlotHoles.TXT
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      0.3mm (12mil)                                             Round             16        PTH        80.60mm (3.17inch)
+T2      0.5mm (20mil)                                             Round             6         PTH        6.35mm (0.25inch)
+T3      1.55mm (61mil)                                            Slot              1         NPTH       0.65mm (0.03inch)
+T4      2.05mm (81mil)                                            Round             1         NPTH       0.00mm (0.00inch)
+T5      2.1mm (83mil)                                             Round             3         NPTH       36.50mm (1.44inch)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              27
+
+Total Processing Time (hh:mm:ss) : 00:00:00

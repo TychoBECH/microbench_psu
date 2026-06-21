@@ -1,0 +1,3 @@
+[submodule "hardware/electrical/main-board/Parts_Library"]
+	path = hardware/electrical/main-board/Parts_Library
+	url = https://github.com/TychoBECH/Parts_Library

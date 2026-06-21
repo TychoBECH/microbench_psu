@@ -70,6 +70,7 @@ int main(void) {
 	uint8_t prev_btn_enable = 1;
 
 	while (1) {
+		CLRWDT(); // pet the watchdog once per loop pass (~50 ms normally, bounded well under the ~2 s WDT period)
 		SCPI_Task();
 
 		uint8_t btn_enc    = IO_RC4_GetValue();

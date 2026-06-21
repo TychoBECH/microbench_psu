@@ -12,7 +12,7 @@
  * @version Package Version 2.1.6
 */
 /*
-© [2026] Microchip Technology Inc. and its subsidiaries.
+ï¿½ [2026] Microchip Technology Inc. and its subsidiaries.
 
     Subject to your compliance with these terms, you may use Microchip 
     software and any derivatives exclusively with Microchip products. 
@@ -63,8 +63,8 @@
 #pragma config PPS1WAY = ON     // PPSLOCKED One-Way Set Enable->PPSLOCKED bit can be cleared and set only once; PPS registers remain locked after one clear/set cycle
 
 //CONFIG5
-#pragma config WDTCPS = WDTCPS_31     // WDT Period Select->Divider ratio 1:65536; software control of WDTPS
-#pragma config WDTE = OFF     // WDT Operating Mode->WDT Disabled; SWDTEN is ignored
+#pragma config WDTCPS = WDTCPS_16     // WDT Period Select->Divider ratio 1:65536 (~2.1 s @ 31 kHz LFINTOSC)
+#pragma config WDTE = ON     // WDT Operating Mode->WDT always enabled
 
 //CONFIG6
 #pragma config WDTCWS = WDTCWS_7     // WDT Window Select->window always open (100%); software control; keyed access not required

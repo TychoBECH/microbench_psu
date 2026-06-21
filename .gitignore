@@ -1,89 +1,16 @@
-### C
-# Object files
-*.o
-*.obj
-*.elf
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Debug files
-*.dSYM/
-*.idb
-*.pdb
-
-### Objective-C
-# Xcode user settings
-xcuserdata/
-
-# Xcode build data
-DerivedData/
-
-# Obj-C/Swift specific
-*.hmap
-
-# App packaging
-*.ipa
-*.dSYM.zip
-*.dSYM
-
-# Playgrounds
-timeline.xctimeline
-playground.xcworkspace
-
-### Windows
-# Windows thumbnail cache files
+# OS junk
 Thumbs.db
-
-# Folder config file
 [Dd]esktop.ini
-
-# Recycle Bin used on file shares
 $RECYCLE.BIN/
+.DS_Store
 
-# Windows shortcuts
-*.lnk
+# Editor/IDE
+*.swp
 
-#MPLAB Specific
-*.d
-*.pre
-*.p1
-*.lst
-*.sym
-*.obj
-*.o
-*.sdb
-*.obj.dmp
-html/
-nbproject/private/
-nbproject/Package-*.bash
-build/
-nbbuild/
-dist/
-nbdist/
-nbactions.xml
-nb-configuration.xml
-funclist
-nbproject/Makefile-*
-disassembly/
-*.map
+# KiCad backups (adjust if a different EDA tool is used)
+*-backups/
+*.bak
+fp-info-cache
+*.kicad_pcb-bak
+*.kicad_sch-bak
+_autosave-*

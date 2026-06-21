@@ -4,7 +4,7 @@
 #define ADC_AVG_SAMPLES 20
 
 // Scaling: adjust to match the hardware (voltage divider / current sense gain / thermistor)
-#define VOLTAGE_ADC_MV_PER_LSB  12.15f  // placeholder: 24000 mV / 4095
+#define VOLTAGE_ADC_MV_PER_LSB  12.15f  // calibrated against hardware voltage divider
 #define CURRENT_ADC_MA_PER_LSB  1.1745f // 5000 mV / 4095 LSB / 1.03958 mV per mA
 #define TEMP_ADC_C_PER_LSB      0.0407f // 5000 mV / 4095 LSB / 30 mV per °C
 

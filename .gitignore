@@ -7,10 +7,23 @@ $RECYCLE.BIN/
 # Editor/IDE
 *.swp
 
-# KiCad backups (adjust if a different EDA tool is used)
+# Altium
+*.PcbDoc.Bak*
+*.SchDoc.Bak*
+*.PrjPcbStructure
+History/
+Project Logs*/
+*.OutJob.Bak*
+__Previews/
+*.DcdmFile.Cmp
+
+# SolidWorks
+~$*
+*.SLDPRT.bak
+*.SLDASM.bak
+*.SLDDRW.bak
+
+# General CAD/EDA backups
 *-backups/
 *.bak
-fp-info-cache
-*.kicad_pcb-bak
-*.kicad_sch-bak
 _autosave-*
